@@ -231,8 +231,12 @@ class Document {
     if (res.node is Line) {
       return res;
     }
-    final block = res.node as Block; // TODO: Can be nullable, handle this case
-    return block.queryChild(res.offset, true);
+    if (res.node != null) {
+      final block =
+          res.node as Block; // TODO: Can be nullable, handle this case
+      return block.queryChild(res.offset, true);
+    }
+    return res;
   }
 
   /// Search given [substring] in the whole document

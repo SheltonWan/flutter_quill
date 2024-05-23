@@ -48,40 +48,40 @@ class QuillEditorVideoEmbedBuilder extends EmbedBuilder {
 
     final width = elementSize.width;
     final height = elementSize.height;
-    if (configurations.onCacheVideoProvider != null) {
-      return FutureBuilder(future: configurations.onCacheVideoProvider!(videoUrl), builder: (context, snapshot){
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Container(
-            width: width,
-            height: height,
-            color: Colors.black,
-            margin: EdgeInsets.all(margin ?? 0.0),
-            alignment: alignment,
-            child:const CircularProgressIndicator(), 
-          );
-        } else if (snapshot.hasError) {
-          return Container(
-            width: width,
-            height: height,
-            margin: EdgeInsets.all(margin ?? 0.0),
-            alignment: alignment 
-          );
-        } else {
-          return Container(
-            width: width,
-            height: height,
-            margin: EdgeInsets.all(margin ?? 0.0),
-            alignment: alignment,
-            child: VideoApp(
-              videoUrl: snapshot.data!,
-              context: context,
-              readOnly: readOnly,
-              onVideoInit: configurations.onVideoInit,
-            ),
-          );
-        }
-      });
-    }
+    // if (configurations.onCacheVideoProvider != null) {
+    //   return FutureBuilder(future: configurations.onCacheVideoProvider!(videoUrl), builder: (context, snapshot){
+    //     if (snapshot.connectionState == ConnectionState.waiting) {
+    //       return Container(
+    //         width: width,
+    //         height: height,
+    //         color: Colors.black,
+    //         margin: EdgeInsets.all(margin ?? 0.0),
+    //         alignment: alignment,
+    //         child:const CircularProgressIndicator(), 
+    //       );
+    //     } else if (snapshot.hasError) {
+    //       return Container(
+    //         width: width,
+    //         height: height,
+    //         margin: EdgeInsets.all(margin ?? 0.0),
+    //         alignment: alignment 
+    //       );
+    //     } else {
+    //       return Container(
+    //         width: width,
+    //         height: height,
+    //         margin: EdgeInsets.all(margin ?? 0.0),
+    //         alignment: alignment,
+    //         child: VideoApp(
+    //           videoUrl: snapshot.data!,
+    //           context: context,
+    //           readOnly: readOnly,
+    //           onVideoInit: configurations.onVideoInit,
+    //         ),
+    //       );
+    //     }
+    //   });
+    // }
     
 
     return Container(
@@ -94,6 +94,7 @@ class QuillEditorVideoEmbedBuilder extends EmbedBuilder {
         context: context,
         readOnly: readOnly,
         onVideoInit: configurations.onVideoInit,
+        onCacheVideoProvider: configurations.onCacheVideoProvider,
       ),
     );
   }
