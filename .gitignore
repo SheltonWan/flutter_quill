@@ -1,0 +1,12 @@
+/example/build
+/example/ios/Flutter
+/example/android/.gradle
+/example/ios/Pods
+/example/.dart_tool
+/.dart_tool
+/example/ios/.symlinks
+/quill_html_converter/.dart_tool
+/quill_pdf_converter/.dart_tool
+/dart_quill_delta/.dart_tool
+/flutter_quill_extensions/.dart_tool
+**/pubspec.lock
