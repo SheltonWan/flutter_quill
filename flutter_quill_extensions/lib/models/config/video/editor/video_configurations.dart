@@ -1,10 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart' show GlobalKey;
 import 'package:meta/meta.dart' show immutable;
 
+import 'youtube_video_support_mode.dart';
+
 @immutable
 class QuillEditorVideoEmbedConfigurations {
-  const QuillEditorVideoEmbedConfigurations( {this.onCacheVideoProvider,
+  const QuillEditorVideoEmbedConfigurations({
+    this.onCacheVideoProvider,
+    this.onLocalVideoProvider,
+    this.onStreamControllerProvider,
     this.onVideoInit,
+    this.youtubeVideoSupportMode = YoutubeVideoSupportMode.iframeView,
   });
 
   /// [onVideoInit] is a callback function that gets triggered when
@@ -21,5 +29,12 @@ class QuillEditorVideoEmbedConfigurations {
   ///   // Customize other callback functions as needed
   /// ```
   final Future<String> Function(String)?  onCacheVideoProvider;
+  final String Function(String)?  onLocalVideoProvider;
+  final StreamController Function()?  onStreamControllerProvider;
   final void Function(GlobalKey videoContainerKey)? onVideoInit;
+
+  /// Specifies how YouTube videos should be loaded if the video URL
+  /// is YouTube video.
+  final YoutubeVideoSupportMode youtubeVideoSupportMode;
+  
 }

@@ -6,6 +6,7 @@ import '../../../models/config/video/editor/video_configurations.dart';
 import '../../../utils/element_utils/element_utils.dart';
 import '../../../utils/utils.dart';
 import '../../widgets/video_app.dart';
+import '../../widgets/videoplayer.dart';
 import '../../widgets/youtube_video_app.dart';
 
 class QuillEditorVideoEmbedBuilder extends EmbedBuilder {
@@ -37,6 +38,7 @@ class QuillEditorVideoEmbedBuilder extends EmbedBuilder {
       return YoutubeVideoApp(
         videoUrl: videoUrl,
         readOnly: readOnly,
+        youtubeVideoSupportMode: configurations.youtubeVideoSupportMode,
       );
     }
     final ((elementSize), margin, alignment) = getElementAttributes(
@@ -44,58 +46,31 @@ class QuillEditorVideoEmbedBuilder extends EmbedBuilder {
       context,
     );
 
-
-
     final width = elementSize.width;
     final height = elementSize.height;
-    // if (configurations.onCacheVideoProvider != null) {
-    //   return FutureBuilder(future: configurations.onCacheVideoProvider!(videoUrl), builder: (context, snapshot){
-    //     if (snapshot.connectionState == ConnectionState.waiting) {
-    //       return Container(
-    //         width: width,
-    //         height: height,
-    //         color: Colors.black,
-    //         margin: EdgeInsets.all(margin ?? 0.0),
-    //         alignment: alignment,
-    //         child:const CircularProgressIndicator(), 
-    //       );
-    //     } else if (snapshot.hasError) {
-    //       return Container(
-    //         width: width,
-    //         height: height,
-    //         margin: EdgeInsets.all(margin ?? 0.0),
-    //         alignment: alignment 
-    //       );
-    //     } else {
-    //       return Container(
-    //         width: width,
-    //         height: height,
-    //         margin: EdgeInsets.all(margin ?? 0.0),
-    //         alignment: alignment,
-    //         child: VideoApp(
-    //           videoUrl: snapshot.data!,
-    //           context: context,
-    //           readOnly: readOnly,
-    //           onVideoInit: configurations.onVideoInit,
-    //         ),
-    //       );
-    //     }
-    //   });
-    // }
-    
+    if(configurations.onLocalVideoProvider!=null&&configurations.onStreamControllerProvider!=null)
+    {
+      return Container(
+        width: width,
+        height: height,
+        margin: EdgeInsets.all(margin ?? 0.0),
+        alignment: alignment,
+        child: RemoteVideo(videoUrl: configurations.onLocalVideoProvider!(videoUrl),navigatorObserver: configurations.onStreamControllerProvider!())
 
-    return Container(
-      width: width,
-      height: height,
-      margin: EdgeInsets.all(margin ?? 0.0),
-      alignment: alignment,
-      child: VideoApp(
-        videoUrl: videoUrl,
-        context: context,
-        readOnly: readOnly,
-        onVideoInit: configurations.onVideoInit,
-        onCacheVideoProvider: configurations.onCacheVideoProvider,
-      ),
-    );
+      );
+    }else {
+      return Container(
+        width: width,
+        height: height,
+        margin: EdgeInsets.all(margin ?? 0.0),
+        alignment: alignment,
+        child: VideoApp(
+          videoUrl: videoUrl,
+          readOnly: readOnly,
+          onVideoInit: configurations.onVideoInit,
+        ),
+      );
+    }
+
   }
 }
