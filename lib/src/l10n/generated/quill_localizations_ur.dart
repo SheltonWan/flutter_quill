@@ -128,6 +128,9 @@ class FlutterQuillLocalizationsUr extends FlutterQuillLocalizations {
   String get alignRight => 'دائیں ہم آہنگ ہوں';
 
   @override
+  String get alignJustify => 'Align justify';
+
+  @override
   String get justifyWinWidth => 'جسٹیفائی ون چوڑائی';
 
   @override
@@ -206,6 +209,9 @@ class FlutterQuillLocalizationsUr extends FlutterQuillLocalizations {
   String get color => 'رنگ';
 
   @override
+  String get lineheight => 'لکیر کی اونچائی';
+
+  @override
   String get findText => 'متن تلاش کریں';
 
   @override
@@ -256,6 +262,12 @@ class FlutterQuillLocalizationsUr extends FlutterQuillLocalizations {
       'معاملے کی حساسیت اور پورے الفاظ کی تلاش';
 
   @override
+  String get caseSensitive => 'Case sensitive';
+
+  @override
+  String get wholeWord => 'Whole word';
+
+  @override
   String get insertImage => 'تصویر داخل کریں';
 
   @override
@@ -275,4 +287,19 @@ class FlutterQuillLocalizationsUr extends FlutterQuillLocalizations {
 
   @override
   String get pasteAVideoUsingALink => 'Paste a video using a link';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get searchSettings => 'Search settings';
+
+  @override
+  String get cut => 'Cut';
+
+  @override
+  String get paste => 'Paste';
+
+  @override
+  String get insertTable => 'Insert table';
 }

@@ -128,6 +128,9 @@ class FlutterQuillLocalizationsJa extends FlutterQuillLocalizations {
   String get alignRight => '右揃え';
 
   @override
+  String get alignJustify => 'Align justify';
+
+  @override
   String get justifyWinWidth => '両端揃え';
 
   @override
@@ -206,6 +209,9 @@ class FlutterQuillLocalizationsJa extends FlutterQuillLocalizations {
   String get color => 'Color';
 
   @override
+  String get lineheight => '行の高さ';
+
+  @override
   String get findText => '検索テキスト';
 
   @override
@@ -250,6 +256,12 @@ class FlutterQuillLocalizationsJa extends FlutterQuillLocalizations {
   String get caseSensitivityAndWholeWordSearch => '大文字と小文字の区別と完全一致検索';
 
   @override
+  String get caseSensitive => 'Case sensitive';
+
+  @override
+  String get wholeWord => 'Whole word';
+
+  @override
   String get insertImage => '画像を挿入';
 
   @override
@@ -269,4 +281,19 @@ class FlutterQuillLocalizationsJa extends FlutterQuillLocalizations {
 
   @override
   String get pasteAVideoUsingALink => 'Paste a video using a link';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get searchSettings => 'Search settings';
+
+  @override
+  String get cut => 'Cut';
+
+  @override
+  String get paste => 'Paste';
+
+  @override
+  String get insertTable => 'Insert table';
 }

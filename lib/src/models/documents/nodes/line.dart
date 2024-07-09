@@ -127,11 +127,11 @@ base class Line extends QuillContainer<Leaf?> {
     if (style == null) {
       return;
     }
-    final thisLength = length;
+    final length = this.length;
 
-    final local = math.min(thisLength - index, len!);
+    final local = math.min(length - index, len!);
     // If index is at newline character then this is a line/block style update.
-    final isLineFormat = (index + local == thisLength) && local == 1;
+    final isLineFormat = (index + local == length) && local == 1;
 
     if (isLineFormat) {
       assert(
@@ -145,7 +145,7 @@ base class Line extends QuillContainer<Leaf?> {
       assert(style.values.every((attr) =>
           attr.scope == AttributeScope.inline ||
           attr.scope == AttributeScope.ignore));
-      assert(index + local != thisLength);
+      assert(index + local != length);
       super.retain(index, local, style);
     }
 
@@ -158,6 +158,7 @@ base class Line extends QuillContainer<Leaf?> {
 
   @override
   void delete(int index, int? len) {
+    final length = this.length;
     final local = math.min(length - index, len!);
     final isLFDeleted = index + local == length; // Line feed
     if (isLFDeleted) {
@@ -372,7 +373,7 @@ base class Line extends QuillContainer<Leaf?> {
     final data = queryChild(offset, true);
     var node = data.node as Leaf?;
     if (node != null) {
-      result = result.mergeAll(node.style);
+      result = node.style;
       var pos = node.length - data.offset;
       while (!node!.isLast && pos < local) {
         node = node.next as Leaf;
@@ -380,7 +381,6 @@ base class Line extends QuillContainer<Leaf?> {
         pos += node.length;
       }
     }
-
     result = result.mergeAll(style);
     if (parent is Block) {
       final block = parent as Block;
@@ -390,7 +390,6 @@ base class Line extends QuillContainer<Leaf?> {
     final remaining = len - local;
     if (remaining > 0 && nextLine != null) {
       final rest = nextLine!.collectStyle(0, remaining);
-      result = result.mergeAll(rest);
       handle(rest);
     }
 
@@ -521,6 +520,7 @@ base class Line extends QuillContainer<Leaf?> {
   int _getNodeText(Leaf node, StringBuffer buffer, int offset, int remaining) {
     final text = node.toPlainText();
     if (text == Embed.kObjectReplacementCharacter) {
+      buffer.write(Embed.kObjectReplacementCharacter);
       return remaining - node.length;
     }
 

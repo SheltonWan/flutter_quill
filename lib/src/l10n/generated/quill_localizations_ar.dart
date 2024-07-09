@@ -128,6 +128,9 @@ class FlutterQuillLocalizationsAr extends FlutterQuillLocalizations {
   String get alignRight => 'محاذاة اليمين';
 
   @override
+  String get alignJustify => 'Align justify';
+
+  @override
   String get justifyWinWidth => 'تبرير مع العرض';
 
   @override
@@ -206,6 +209,9 @@ class FlutterQuillLocalizationsAr extends FlutterQuillLocalizations {
   String get color => 'اللون';
 
   @override
+  String get lineheight => 'ارتفاع خط';
+
+  @override
   String get findText => 'بحث عن نص';
 
   @override
@@ -251,6 +257,12 @@ class FlutterQuillLocalizationsAr extends FlutterQuillLocalizations {
       'حالة الحساسية والبحث عن كلمة كاملة';
 
   @override
+  String get caseSensitive => 'Case sensitive';
+
+  @override
+  String get wholeWord => 'Whole word';
+
+  @override
   String get insertImage => 'إدراج صورة';
 
   @override
@@ -270,4 +282,19 @@ class FlutterQuillLocalizationsAr extends FlutterQuillLocalizations {
 
   @override
   String get pasteAVideoUsingALink => 'لصق فيديو باستخدام رابط';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get searchSettings => 'Search settings';
+
+  @override
+  String get cut => 'Cut';
+
+  @override
+  String get paste => 'Paste';
+
+  @override
+  String get insertTable => 'Insert table';
 }

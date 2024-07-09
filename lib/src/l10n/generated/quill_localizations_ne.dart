@@ -128,6 +128,9 @@ class FlutterQuillLocalizationsNe extends FlutterQuillLocalizations {
   String get alignRight => 'दायाँ पङ्क्तिबद्ध';
 
   @override
+  String get alignJustify => 'Align justify';
+
+  @override
   String get justifyWinWidth => 'जस्टीफ़ी विन चौड़ाई';
 
   @override
@@ -206,6 +209,9 @@ class FlutterQuillLocalizationsNe extends FlutterQuillLocalizations {
   String get color => 'रङ';
 
   @override
+  String get lineheight => 'रेखा-उचाइ';
+
+  @override
   String get findText => 'टेक्स्ट फेला पार्नुहोस्';
 
   @override
@@ -255,6 +261,12 @@ class FlutterQuillLocalizationsNe extends FlutterQuillLocalizations {
       'केस संवेदनशीलता र सम्पूर्ण शब्द खोज';
 
   @override
+  String get caseSensitive => 'Case sensitive';
+
+  @override
+  String get wholeWord => 'Whole word';
+
+  @override
   String get insertImage => 'छवि सम्मिलित गर्नुहोस्';
 
   @override
@@ -276,4 +288,19 @@ class FlutterQuillLocalizationsNe extends FlutterQuillLocalizations {
 
   @override
   String get pasteAVideoUsingALink => 'लिङ्क प्रयोग गरेर भिडियो टाँस्नुहोस्';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get searchSettings => 'Search settings';
+
+  @override
+  String get cut => 'Cut';
+
+  @override
+  String get paste => 'Paste';
+
+  @override
+  String get insertTable => 'Insert table';
 }

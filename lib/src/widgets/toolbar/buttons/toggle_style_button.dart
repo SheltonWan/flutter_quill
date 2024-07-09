@@ -78,10 +78,7 @@ class QuillToolbarToggleStyleButtonState
           'left' => (context.loc.alignLeft, Icons.format_align_left),
           'right' => (context.loc.alignRight, Icons.format_align_right),
           'center' => (context.loc.alignCenter, Icons.format_align_center),
-          'justify' => (
-              context.loc.justifyWinWidth,
-              Icons.format_align_justify
-            ),
+          'justify' => (context.loc.alignJustify, Icons.format_align_justify),
           Object() => throw ArgumentError(widget.attribute.value),
           null => (context.loc.alignCenter, Icons.format_align_center),
         };
@@ -96,11 +93,8 @@ class QuillToolbarToggleStyleButtonState
   @override
   String get defaultTooltip => _defaultTooltipAndIconData.$1;
 
-  IconData get iconData {
-    return options.iconData ??
-        context.quillToolbarBaseButtonOptions?.iconData ??
-        _defaultTooltipAndIconData.$2;
-  }
+  @override
+  IconData get defaultIconData => _defaultTooltipAndIconData.$2;
 
   void _onPressed() {
     _toggleAttribute();
@@ -140,6 +134,7 @@ class QuillToolbarToggleStyleButtonState
 
   bool _getIsToggled(Map<String, Attribute> attrs) {
     if (widget.attribute.key == Attribute.list.key ||
+        widget.attribute.key == Attribute.header.key ||
         widget.attribute.key == Attribute.script.key ||
         widget.attribute.key == Attribute.align.key) {
       final attribute = attrs[widget.attribute.key];

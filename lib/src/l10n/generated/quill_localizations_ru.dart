@@ -128,6 +128,9 @@ class FlutterQuillLocalizationsRu extends FlutterQuillLocalizations {
   String get alignRight => 'Выровнять по правому краю';
 
   @override
+  String get alignJustify => 'Align justify';
+
+  @override
   String get justifyWinWidth => 'Выровнять по ширине окна';
 
   @override
@@ -206,6 +209,9 @@ class FlutterQuillLocalizationsRu extends FlutterQuillLocalizations {
   String get color => 'Цвет';
 
   @override
+  String get lineheight => 'Высота линии';
+
+  @override
   String get findText => 'Найти текст';
 
   @override
@@ -254,6 +260,12 @@ class FlutterQuillLocalizationsRu extends FlutterQuillLocalizations {
       'Учет регистра и поиск по всему слову';
 
   @override
+  String get caseSensitive => 'Case sensitive';
+
+  @override
+  String get wholeWord => 'Whole word';
+
+  @override
   String get insertImage => 'Вставить изображение';
 
   @override
@@ -275,4 +287,19 @@ class FlutterQuillLocalizationsRu extends FlutterQuillLocalizations {
 
   @override
   String get pasteAVideoUsingALink => 'Paste a video using a link';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get searchSettings => 'Search settings';
+
+  @override
+  String get cut => 'Cut';
+
+  @override
+  String get paste => 'Paste';
+
+  @override
+  String get insertTable => 'Insert table';
 }

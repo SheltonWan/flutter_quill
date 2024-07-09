@@ -172,6 +172,10 @@ class QuillEditorState extends State<QuillEditor>
   @override
   void initState() {
     super.initState();
+    widget.configurations.controller.editorFocusNode ??= widget.focusNode;
+    if (configurations.autoFocus) {
+      widget.configurations.controller.editorFocusNode?.requestFocus();
+    }
     _editorKey = configurations.editorKey ?? GlobalKey<EditorState>();
     _selectionGestureDetectorBuilder =
         _QuillEditorSelectionGestureDetectorBuilder(
@@ -290,6 +294,7 @@ class QuillEditorState extends State<QuillEditor>
               enableScribble: configurations.enableScribble,
               onScribbleActivated: configurations.onScribbleActivated,
               scribbleAreaInsets: configurations.scribbleAreaInsets,
+              readOnlyMouseCursor: configurations.readOnlyMouseCursor,
             ),
           ),
         ),

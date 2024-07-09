@@ -177,26 +177,46 @@ class Document {
 
   /// Only attributes applied to all characters within this range are
   /// included in the result.
+  /// Special case of no-selection at start of empty line: gets inline style(s) from preceding non-empty line.
   Style collectStyle(int index, int len) {
-    final res = queryChild(index);
-    Style rangeStyle;
+    var res = queryChild(index);
     if (len > 0) {
       return (res.node as Line).collectStyle(res.offset, len);
     }
+    //
     if (res.offset == 0) {
-      return rangeStyle = (res.node as Line).collectStyle(res.offset, len);
+      final current = (res.node as Line).collectStyle(0, 0);
+      //
+      while ((res.node as Line).length == 1 && index > 0) {
+        res = queryChild(--index);
+      }
+      //
+      final style = (res.node as Line).collectStyle(res.offset, 0);
+      final remove = <Attribute>{};
+      for (final attr in style.attributes.values) {
+        if (!Attribute.inlineKeys.contains(attr.key)) {
+          if (!current.containsKey(attr.key)) {
+            remove.add(attr);
+          }
+        }
+      }
+      if (remove.isNotEmpty) {
+        return style.removeAll(remove);
+      }
+      return style;
     }
-    rangeStyle = (res.node as Line).collectStyle(res.offset - 1, len);
-    final linkAttribute = rangeStyle.attributes[Attribute.link.key];
+    //
+    final style = (res.node as Line).collectStyle(res.offset - 1, 0);
+    final linkAttribute = style.attributes[Attribute.link.key];
     if ((linkAttribute != null) &&
         (linkAttribute.value !=
             (res.node as Line)
                 .collectStyle(res.offset, len)
                 .attributes[Attribute.link.key]
                 ?.value)) {
-      return rangeStyle.removeAll({linkAttribute});
+      return style.removeAll({linkAttribute});
     }
-    return rangeStyle;
+    return style;
   }
 
   /// Returns all styles and Embed for each node within selection
@@ -231,12 +251,8 @@ class Document {
     if (res.node is Line) {
       return res;
     }
-    if (res.node != null) {
-      final block =
-          res.node as Block; // TODO: Can be nullable, handle this case
-      return block.queryChild(res.offset, true);
-    }
-    return res;
+    final block = res.node as Block; // TODO: Can be nullable, handle this case
+    return block.queryChild(res.offset, true);
   }
 
   /// Search given [substring] in the whole document
@@ -338,10 +354,7 @@ class Document {
     } catch (e) {
       throw StateError('_delta compose failed');
     }
-
-    if (_delta != _root.toDelta()) {
-      throw StateError('Compose failed');
-    }
+    assert(_delta == _root.toDelta(), 'Compose failed');
     final change = DocChange(originalDelta, delta, changeSource);
     documentChangeObserver.add(change);
     history.handleDocChange(change);
@@ -426,7 +439,6 @@ class Document {
           doc.toString(), 'Document Delta cannot be empty.');
     }
 
-    // print(doc.last.data.runtimeType);
     assert((doc.last.data as String).endsWith('\n'));
 
     var offset = 0;

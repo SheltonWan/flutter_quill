@@ -19,7 +19,7 @@ dependencies:
   flutter_quill_test: ^9.3.4
   quill_html_converter: ^9.3.4
   quill_pdf_converter: ^9.3.4
-  # No^9.2.10ackages
+  # Dart Packages
   path: ^1.8.3
   equatable: ^2.0.5
   cross_file: ^0.3.4
@@ -63,11 +63,13 @@ dependency_overrides:
   quill_pdf_converter:
     path: ../quill_pdf_converter
 
+  pdf_widget_wrapper: ^1.0.4
+
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.2
+  flutter_lints: ^4.0.0
   build_runner: ^2.4.8
   flutter_gen_runner: ^5.4.0
 
@@ -106,8 +108,5 @@ flutter:
     - family: roboto-mono
       fonts:
         - asset: assets/fonts/RobotoMono-Regular.ttf
-    - family: SF-UI-Display
-      fonts:
-        - asset: assets/fonts/SF-Pro-Display-Regular.otf
 
 flutter_gen:

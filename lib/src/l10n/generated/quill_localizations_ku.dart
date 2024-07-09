@@ -128,6 +128,9 @@ class FlutterQuillLocalizationsKu extends FlutterQuillLocalizations {
   String get alignRight => 'بۆ ڕاست';
 
   @override
+  String get alignJustify => 'Align justify';
+
+  @override
   String get justifyWinWidth => 'پانی ڕێکبخە';
 
   @override
@@ -206,6 +209,9 @@ class FlutterQuillLocalizationsKu extends FlutterQuillLocalizations {
   String get color => 'ڕەنگ';
 
   @override
+  String get lineheight => 'بەرزی هێڵ';
+
+  @override
   String get findText => 'دۆزینەوەی نوسین';
 
   @override
@@ -252,6 +258,12 @@ class FlutterQuillLocalizationsKu extends FlutterQuillLocalizations {
   String get caseSensitivityAndWholeWordSearch => 'گەڕان بۆ تەواوی وشە';
 
   @override
+  String get caseSensitive => 'Case sensitive';
+
+  @override
+  String get wholeWord => 'Whole word';
+
+  @override
   String get insertImage => 'دانانی وێنە';
 
   @override
@@ -273,6 +285,21 @@ class FlutterQuillLocalizationsKu extends FlutterQuillLocalizations {
 
   @override
   String get pasteAVideoUsingALink => 'لینکی ڤیدیۆیەک دابنێ';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get searchSettings => 'Search settings';
+
+  @override
+  String get cut => 'Cut';
+
+  @override
+  String get paste => 'Paste';
+
+  @override
+  String get insertTable => 'Insert table';
 }
 
 /// The translations for Kurdish (`ku_CKB`).
@@ -479,6 +506,9 @@ class FlutterQuillLocalizationsKuCkb extends FlutterQuillLocalizationsKu {
 
   @override
   String get color => 'ڕەنگ';
+
+  @override
+  String get lineheight => 'بەرزی هێڵ';
 
   @override
   String get findText => 'دۆزینەوەی نوسین';

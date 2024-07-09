@@ -4,11 +4,11 @@ import 'package:flutter/services.dart' show ClipboardData, Clipboard;
 import 'package:flutter/widgets.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:meta/meta.dart';
-import 'package:super_clipboard/super_clipboard.dart';
 
 import '../../../flutter_quill.dart';
 import '../../../quill_delta.dart';
 import '../../models/documents/delta_x.dart';
+import '../../services/clipboard/clipboard_service_provider.dart';
 import '../../utils/delta.dart';
 
 typedef ReplaceTextCallback = bool Function(int index, int len, Object? data);
@@ -25,14 +25,17 @@ class QuillController extends ChangeNotifier {
     this.onSelectionCompleted,
     this.onSelectionChanged,
     this.readOnly = false,
+    this.editorFocusNode,
   })  : _document = document,
         _selection = selection;
 
   factory QuillController.basic(
       {QuillControllerConfigurations configurations =
-          const QuillControllerConfigurations()}) {
+          const QuillControllerConfigurations(),
+      FocusNode? editorFocusNode}) {
     return QuillController(
       configurations: configurations,
+      editorFocusNode: editorFocusNode,
       document: Document(),
       selection: const TextSelection.collapsed(offset: 0),
     );
@@ -212,26 +215,13 @@ class QuillController extends ChangeNotifier {
     }
   }
 
-  void _handleHistoryChange(int? len) {
-    // move cursor according to the length inserted or deleted from redo or undo
-    // operation. len is the length inserted or deleted.
-    if (len! != 0) {
-      // if (this.selection.extentOffset >= document.length) {
-      // // cursor exceeds the length of document, position it in the end
-      // updateSelection(
-      // TextSelection.collapsed(offset: document.length), ChangeSource.LOCAL);
-      updateSelection(
-        (selection.baseOffset + len) > 0
-            ? TextSelection.collapsed(
-                offset: selection.baseOffset + len,
-              )
-            : TextSelection.collapsed(offset: document.length),
-        ChangeSource.local,
-      );
-    } else {
-      // no need to move cursor
-      notifyListeners();
-    }
+  void _handleHistoryChange(int len) {
+    updateSelection(
+      TextSelection.collapsed(
+        offset: len,
+      ),
+      ChangeSource.local,
+    );
   }
 
   void redo() {
@@ -271,9 +261,7 @@ class QuillController extends ChangeNotifier {
       var shouldRetainDelta = toggledStyle.isNotEmpty &&
           delta.isNotEmpty &&
           delta.length <= 2 &&
-          delta.last.isInsert &&
-          // pasted text should not use toggledStyle
-          (data is! String || data.length < 2);
+          delta.last.isInsert;
       if (shouldRetainDelta &&
           toggledStyle.isNotEmpty &&
           delta.length == 2 &&
@@ -485,6 +473,9 @@ class QuillController extends ChangeNotifier {
   List<OffsetValue> get pasteStyleAndEmbed => _pasteStyleAndEmbed;
   bool readOnly;
 
+  /// Used to give focus to the editor following a toolbar action
+  FocusNode? editorFocusNode;
+
   ImageUrl? _copiedImageUrl;
   ImageUrl? get copiedImageUrl => _copiedImageUrl;
 
@@ -516,22 +507,44 @@ class QuillController extends ChangeNotifier {
   Future<bool> clipboardPaste({void Function()? updateEditor}) async {
     if (readOnly || !selection.isValid) return true;
 
-    if (await _pasteHTML()) {
+    final pasteUsingHtmlSuccess = await _pasteHTML();
+    if (pasteUsingHtmlSuccess) {
+      updateEditor?.call();
+      return true;
+    }
+
+    final pasteUsingMarkdownSuccess = await _pasteMarkdown();
+    if (pasteUsingMarkdownSuccess) {
       updateEditor?.call();
       return true;
     }
 
     // Snapshot the input before using `await`.
     // See https://github.com/flutter/flutter/issues/11427
-    final plainText = await Clipboard.getData(Clipboard.kTextPlain);
-    if (plainText != null) {
-      replaceTextWithEmbeds(
-        selection.start,
-        selection.end - selection.start,
-        plainText.text!,
-        TextSelection.collapsed(
-            offset: selection.start + plainText.text!.length),
-      );
+    final plainTextClipboardData =
+        await Clipboard.getData(Clipboard.kTextPlain);
+    if (plainTextClipboardData != null) {
+      final lines = plainTextClipboardData.text!.split('\n');
+      for (var i = 0; i < lines.length; ++i) {
+        final line = lines[i];
+        if (line.isNotEmpty) {
+          replaceTextWithEmbeds(
+            selection.start,
+            selection.end - selection.start,
+            line,
+            TextSelection.collapsed(offset: selection.start + line.length),
+          );
+        }
+        if (i != lines.length - 1) {
+          document.insert(selection.extentOffset, '\n');
+          _updateSelection(
+            TextSelection.collapsed(
+              offset: selection.extentOffset + 1,
+            ),
+            insertNewline: true,
+          );
+        }
+      }
       updateEditor?.call();
       return true;
     }
@@ -544,27 +557,62 @@ class QuillController extends ChangeNotifier {
     return false;
   }
 
+  void _pasteUsingDelta(Delta deltaFromClipboard) {
+    replaceText(
+      selection.start,
+      selection.end - selection.start,
+      deltaFromClipboard,
+      TextSelection.collapsed(offset: selection.end),
+    );
+  }
+
+  /// Return true if can paste using HTML
   Future<bool> _pasteHTML() async {
-    final clipboard = SystemClipboard.instance;
-    if (clipboard != null) {
-      final reader = await clipboard.read();
-      if (reader.canProvide(Formats.htmlText)) {
-        final html = await reader.readValue(Formats.htmlText);
-        if (html == null) {
-          return false;
-        }
-        final htmlBody = html_parser.parse(html).body?.outerHtml;
-        final deltaFromClipboard = DeltaX.fromHtml(htmlBody ?? html);
+    final clipboardService = ClipboardServiceProvider.instance;
 
-        replaceText(
-          selection.start,
-          selection.end - selection.start,
-          deltaFromClipboard,
-          TextSelection.collapsed(offset: selection.end),
-        );
-
-        return true;
+    Future<String?> getHTML() async {
+      if (await clipboardService.canProvideHtmlTextFromFile()) {
+        return await clipboardService.getHtmlTextFromFile();
       }
+      if (await clipboardService.canProvideHtmlText()) {
+        return await clipboardService.getHtmlText();
+      }
+      return null;
+    }
+
+    final htmlText = await getHTML();
+    if (htmlText != null) {
+      final htmlBody = html_parser.parse(htmlText).body?.outerHtml;
+      final deltaFromClipboard = DeltaX.fromHtml(htmlBody ?? htmlText);
+
+      _pasteUsingDelta(deltaFromClipboard);
+
+      return true;
+    }
+    return false;
+  }
+
+  /// Return true if can paste using Markdown
+  Future<bool> _pasteMarkdown() async {
+    final clipboardService = ClipboardServiceProvider.instance;
+
+    Future<String?> getMarkdown() async {
+      if (await clipboardService.canProvideMarkdownTextFromFile()) {
+        return await clipboardService.getMarkdownTextFromFile();
+      }
+      if (await clipboardService.canProvideMarkdownText()) {
+        return await clipboardService.getMarkdownText();
+      }
+      return null;
+    }
+
+    final markdownText = await getMarkdown();
+    if (markdownText != null) {
+      final deltaFromClipboard = DeltaX.fromMarkdown(markdownText);
+
+      _pasteUsingDelta(deltaFromClipboard);
+
+      return true;
     }
     return false;
   }

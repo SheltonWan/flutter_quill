@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:super_clipboard/super_clipboard.dart';
 
 import '../../../../extensions.dart';
 import '../../../../flutter_quill.dart';
 import '../../../l10n/extensions/localizations.dart';
+import '../../../services/clipboard/clipboard_service_provider.dart';
 import '../base_button/base_value_button.dart';
 
 enum ClipboardAction { cut, copy, paste }
@@ -27,13 +27,10 @@ class ClipboardMonitor {
   }
 
   Future<void> _update(void Function() listener) async {
-    final reader = await SystemClipboard.instance?.read();
-    if (reader != null) {
-      final available = reader.platformFormats;
-      if (_canPaste != available.isNotEmpty) {
-        _canPaste = available.isNotEmpty;
-        listener();
-      }
+    final clipboardService = ClipboardServiceProvider.instance;
+    if (await clipboardService.canPaste()) {
+      _canPaste = true;
+      listener();
     }
   }
 }
@@ -91,7 +88,8 @@ class QuillToolbarClipboardButtonState
         ClipboardAction.paste => context.loc.paste,
       };
 
-  IconData get _icon => switch (widget.clipboardAction) {
+  @override
+  IconData get defaultIconData => switch (widget.clipboardAction) {
         ClipboardAction.cut => Icons.cut_outlined,
         ClipboardAction.copy => Icons.copy_outlined,
         ClipboardAction.paste => Icons.paste_outlined,
@@ -132,7 +130,7 @@ class QuillToolbarClipboardButtonState
         message: tooltip,
         child: QuillToolbarIconButton(
           icon: Icon(
-            _icon,
+            iconData,
             size: iconSize * iconButtonFactor,
           ),
           isSelected: false,

@@ -128,7 +128,10 @@ class FlutterQuillLocalizationsPt extends FlutterQuillLocalizations {
   String get alignRight => 'Align right';
 
   @override
-  String get justifyWinWidth => 'Justify';
+  String get alignJustify => 'Align justify';
+
+  @override
+  String get justifyWinWidth => 'Justify win width';
 
   @override
   String get textDirection => 'Text direction';
@@ -206,6 +209,9 @@ class FlutterQuillLocalizationsPt extends FlutterQuillLocalizations {
   String get color => 'Cor';
 
   @override
+  String get lineheight => 'Altura da linha';
+
+  @override
   String get findText => 'Find text';
 
   @override
@@ -253,6 +259,12 @@ class FlutterQuillLocalizationsPt extends FlutterQuillLocalizations {
       'Sensibilidade a maiúsculas e minúsculas e pesquisa de palavras inteiras';
 
   @override
+  String get caseSensitive => 'Case sensitive';
+
+  @override
+  String get wholeWord => 'Whole word';
+
+  @override
   String get insertImage => 'Inserir imagem';
 
   @override
@@ -272,6 +284,21 @@ class FlutterQuillLocalizationsPt extends FlutterQuillLocalizations {
 
   @override
   String get pasteAVideoUsingALink => 'Paste a video using a link';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get searchSettings => 'Search settings';
+
+  @override
+  String get cut => 'Cut';
+
+  @override
+  String get paste => 'Paste';
+
+  @override
+  String get insertTable => 'Insert table';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -457,6 +484,9 @@ class FlutterQuillLocalizationsPtBr extends FlutterQuillLocalizationsPt {
 
   @override
   String get color => 'Cor';
+
+  @override
+  String get lineheight => 'Altura da linha';
 
   @override
   String get findText => 'Find text';
