@@ -39,3 +39,13 @@ example/windows/flutter/ephemeral/.plugin_symlinks/printing
 example/windows/flutter/ephemeral/.plugin_symlinks/share_plus
 example/windows/flutter/ephemeral/.plugin_symlinks/super_native_extensions
 example/windows/flutter/ephemeral/.plugin_symlinks/url_launcher_windows
+example/windows/flutter/ephemeral/.plugin_symlinks
+example/macos/Pods
+example/macos/Flutter/ephemeral/.symlinks
+example/macos/Flutter/ephemeral
+example/linux/flutter/ephemeral/.plugin_symlinks
+example/linux/flutter/generated_plugin_registrant.cc
+example/linux/flutter/generated_plugins.cmake
+example/macos/Flutter/GeneratedPluginRegistrant.swift
+example/windows/flutter/generated_plugin_registrant.cc
+example/windows/flutter/generated_plugins.cmake
