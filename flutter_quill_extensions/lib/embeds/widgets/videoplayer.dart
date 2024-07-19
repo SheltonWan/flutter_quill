@@ -35,8 +35,7 @@ abstract class MyVideoController {
 
 class MediaKitVideoController extends MyVideoController {
   MediaKitVideoController({required this.videoUrl}) {
-    _player = Player(
-        configuration: PlayerConfiguration(
+    _player = Player(configuration: PlayerConfiguration(
       ready: () {
         _videoController = VideoController(_player);
       },
@@ -47,7 +46,7 @@ class MediaKitVideoController extends MyVideoController {
   final String videoUrl;
   bool _initialized = false;
   bool _hasError = false;
-  late StreamSubscription? _subscription;
+  late StreamSubscription? _completedSubscription;
   late StreamSubscription? _errorSubscription;
 
   @override
@@ -57,13 +56,21 @@ class MediaKitVideoController extends MyVideoController {
     } else {
       await _player.open(Media('file://$videoUrl'), play: false);
     }
-    
+
+    // Completer videoInitCompleter = Completer<bool>();
+
+    // final videoSubscription = _player.stream.videoParams.listen((event) {
+    //   videoInitCompleter.complete(true);
+    // });
+
+    // _initialized = await videoInitCompleter.future;
+    // videoSubscription?.cancel();
     _initialized = true;
   }
 
   @override
   void addListener(VoidCallback callback) {
-    _subscription = _player.stream.completed.listen((event) {
+    _completedSubscription = _player.stream.completed.listen((event) {
       callback();
     });
 
@@ -75,16 +82,16 @@ class MediaKitVideoController extends MyVideoController {
 
   @override
   void removeListener(VoidCallback callback) {
-    _subscription?.cancel();
+    _completedSubscription?.cancel();
     _errorSubscription?.cancel();
   }
 
+  ///因为有 控制器 大小限制，所以不能由原始比例控制，否则越界
   @override
-  double get aspectRatio => _player.state.videoParams.aspect ?? 16.0 / 9.0;
+  double get aspectRatio => /*_player.state.videoParams.aspect ??*/ 16.0 / 9.0;
 
   @override
   void dispose() {
-    //_videoController.dispose();
     _player.dispose();
   }
 
@@ -134,9 +141,7 @@ class MediaKitVideoController extends MyVideoController {
 
 //支持ios、Android、macos
 class PlatformVideoController extends MyVideoController {
-
   PlatformVideoController(String videoUrl) {
-    
     if (!isHttpBasedUrl(videoUrl)) {
       final file = File(videoUrl);
       _controller = VideoPlayerController.file(file);
@@ -150,7 +155,7 @@ class PlatformVideoController extends MyVideoController {
         if (kDebugMode) {
           print(e.toString());
         }
-      } 
+      }
     }
 
     _controller?.setLooping(false);
@@ -189,6 +194,7 @@ class PlatformVideoController extends MyVideoController {
   Future<void> stop() async {
     await _controller!.pause();
   }
+
   @override
   void addListener(VoidCallback callback) {
     _controller?.addListener(callback);
@@ -219,12 +225,16 @@ class PlatformVideoController extends MyVideoController {
 
 class RemoteVideo extends StatefulWidget {
   const RemoteVideo(
-      {required this.videoUrl, required this.navigatorObserver, super.key,
+      {required this.videoUrl,
+      required this.navigatorObserver,
+      super.key,
       this.allowPlay = true,
-      this.autoPlay = false});
+      this.autoPlay = false,
+      this.useMediaKit = false});
   final String videoUrl;
   final bool allowPlay;
   final bool autoPlay;
+  final bool useMediaKit;
   final StreamController navigatorObserver;
   @override
   State<StatefulWidget> createState() => _RemoteVideoState();
@@ -248,7 +258,7 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
         }
       }
     });
-    if (Platform.isAndroid || Platform.isIOS) {
+    if (!widget.useMediaKit) {
       _videoController = PlatformVideoController(widget.videoUrl);
     } else {
       _videoController = MediaKitVideoController(videoUrl: widget.videoUrl);
@@ -290,8 +300,9 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
     if (_videoController.isPlaying) {
       _videoController.stop();
     }
-    _videoController..removeListener(update)
-    ..dispose();
+    _videoController
+      ..removeListener(update)
+      ..dispose();
 
     super.dispose();
   }
@@ -330,11 +341,19 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return _videoInitialized
-        ? LayoutBuilder(
-            builder: (context, constraints) {
+        ? LayoutBuilder(builder: (context, constraints) {
+            var width = MediaQuery.of(context).size.width;
+            var height = width / _videoController.aspectRatio;
+            if (constraints.maxHeight != double.infinity) {
+              height = constraints.maxHeight;
+              width = height * _videoController.aspectRatio;
+            } else if (constraints.maxWidth != double.infinity) {
+              width = constraints.maxWidth;
+              height = width / _videoController.aspectRatio;
+            }
             return Container(
-                width: constraints.maxHeight!=double.infinity? constraints.maxHeight * _videoController.aspectRatio:constraints.maxWidth,
-                height: constraints.maxWidth!=double.infinity? constraints.maxWidth / _videoController.aspectRatio:constraints.maxHeight,
+                width: width,
+                height: height,
                 color: Colors.transparent,
                 child: Center(
                     child: Stack(
@@ -346,10 +365,10 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
                         child: SizedBox(
                             width: _videoController is PlatformVideoController
                                 ? _videoController.size.width
-                                : (constraints.maxHeight!=double.infinity? constraints.maxHeight * _videoController.aspectRatio:constraints.maxWidth),
+                                : width,
                             height: _videoController is PlatformVideoController
                                 ? _videoController.size.height
-                                : (constraints.maxWidth!=double.infinity? constraints.maxWidth / _videoController.aspectRatio:constraints.maxHeight),
+                                : height,
                             child: Stack(
                               alignment: Alignment.bottomCenter,
                               children: [
@@ -376,11 +395,19 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
                   ],
                 )));
           })
-        : LayoutBuilder(
-            builder: (context, constraints) {
+        : LayoutBuilder(builder: (context, constraints) {
+            var width = MediaQuery.of(context).size.width;
+            var height = width / _videoController.aspectRatio;
+            if (constraints.maxHeight != double.infinity) {
+              height = constraints.maxHeight;
+              width = height * _videoController.aspectRatio;
+            } else if (constraints.maxWidth != double.infinity) {
+              width = constraints.maxWidth;
+              height = width / _videoController.aspectRatio;
+            }
             return Container(
-              width: constraints.maxWidth!=double.infinity?constraints.maxWidth: constraints.maxHeight / (9.0 / 16.0),
-              height: constraints.maxHeight!=double.infinity?constraints.maxHeight : constraints.maxWidth/(16.0/9.0),
+              width: width,
+              height: height,
               color: Colors.black,
               child: Center(
                   child: _hasError

@@ -13,6 +13,7 @@ class QuillEditorVideoEmbedConfigurations {
     this.onStreamControllerProvider,
     this.onVideoInit,
     this.youtubeVideoSupportMode = YoutubeVideoSupportMode.iframeView,
+    this.useMediaKit = false,
   });
 
   /// [onVideoInit] is a callback function that gets triggered when
@@ -28,13 +29,14 @@ class QuillEditorVideoEmbedConfigurations {
   ///   },
   ///   // Customize other callback functions as needed
   /// ```
-  final Future<String> Function(String)?  onCacheVideoProvider;
-  final String Function(String)?  onLocalVideoProvider;
-  final StreamController Function()?  onStreamControllerProvider;
+  final Future<String> Function(String)? onCacheVideoProvider;
+  final String Function(String)? onLocalVideoProvider;
+  final StreamController Function()? onStreamControllerProvider;
   final void Function(GlobalKey videoContainerKey)? onVideoInit;
 
   /// Specifies how YouTube videos should be loaded if the video URL
   /// is YouTube video.
   final YoutubeVideoSupportMode youtubeVideoSupportMode;
-  
+
+  final bool useMediaKit;
 }

@@ -55,7 +55,7 @@ class QuillEditorVideoEmbedBuilder extends EmbedBuilder {
         height: height,
         margin: EdgeInsets.all(margin ?? 0.0),
         alignment: alignment,
-        child: RemoteVideo(videoUrl: configurations.onLocalVideoProvider!(videoUrl),navigatorObserver: configurations.onStreamControllerProvider!())
+        child: RemoteVideo(videoUrl: configurations.onLocalVideoProvider!(videoUrl),navigatorObserver: configurations.onStreamControllerProvider!(),useMediaKit: configurations.useMediaKit,)
 
       );
     }else {
