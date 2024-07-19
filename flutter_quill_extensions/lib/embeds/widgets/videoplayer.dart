@@ -171,7 +171,8 @@ class PlatformVideoController extends MyVideoController {
   bool get isInitialized =>
       _controller != null && _controller!.value.isInitialized;
   @override
-  double get aspectRatio => _controller!.value.aspectRatio;
+  double get aspectRatio =>
+      isInitialized ? _controller!.value.aspectRatio : 16.0 / 9.0;
   @override
   Size get size => _controller!.value.size;
   @override
@@ -230,10 +231,12 @@ class RemoteVideo extends StatefulWidget {
       super.key,
       this.allowPlay = true,
       this.autoPlay = false,
-      this.useMediaKit = false});
+      this.useMediaKit = false,
+      this.fullScreen = false});
   final String videoUrl;
   final bool allowPlay;
   final bool autoPlay;
+  final bool fullScreen;
   final bool useMediaKit;
   final StreamController navigatorObserver;
   @override
@@ -244,6 +247,119 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
   late MyVideoController _videoController;
   bool _hasError = false;
   StreamSubscription? _subscription;
+
+  OverlayEntry? _overlayEntry;
+  bool _isFullScreen = false;
+  Rect? _widgetRect;
+
+  void _getWidgetRect() {
+    final renderBox = context.findRenderObject() as RenderBox;
+    final offset = renderBox.localToGlobal(Offset.zero);
+    _widgetRect = offset & renderBox.size;
+  }
+
+  void _showFullScreen() {
+    _getWidgetRect();
+    _overlayEntry = _createOverlayEntry(child: _videoWidget);
+    Overlay.of(context).insert(_overlayEntry!);
+    setState(() {
+      _isFullScreen = true;
+    });
+  }
+
+  void _closeFullScreen() {
+    _overlayEntry?.remove();
+    setState(() {
+      _isFullScreen = false;
+    });
+  }
+
+  OverlayEntry _createOverlayEntry({required Widget child}) {
+    return OverlayEntry(
+      builder: (context) => AnimatedPositioned(
+        duration: const Duration(milliseconds: 200),
+        top: _isFullScreen ? 0 : _widgetRect!.top,
+        left: _isFullScreen ? 0 : _widgetRect!.left,
+        width: _isFullScreen
+            ? MediaQuery.of(context).size.width
+            : _widgetRect!.width,
+        height: _isFullScreen
+            ? MediaQuery.of(context).size.height
+            : _widgetRect!.height,
+        child: Material(
+          color: Colors.black,
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  Widget get _videoWidget => LayoutBuilder(builder: (context, constraints) {
+        var width = MediaQuery.of(context).size.width;
+        var height = width / _videoController.aspectRatio;
+        if (constraints.maxHeight != double.infinity) {
+          height = constraints.maxHeight;
+          width = height * _videoController.aspectRatio;
+        } else if (constraints.maxWidth != double.infinity) {
+          width = constraints.maxWidth;
+          height = width / _videoController.aspectRatio;
+        }
+        return Container(
+            width: width,
+            height: height,
+            color: Colors.transparent,
+            child: Center(
+                child: Stack(
+              alignment: Alignment.center,
+              children: [
+                AspectRatio(
+                  aspectRatio: _videoController.aspectRatio,
+                  child: FittedBox(
+                    child: SizedBox(
+                        width: _videoController is PlatformVideoController
+                            ? _videoController.size.width
+                            : width,
+                        height: _videoController is PlatformVideoController
+                            ? _videoController.size.height
+                            : height,
+                        child: Stack(
+                          alignment: Alignment.bottomCenter,
+                          children: [
+                            _videoController.videoPlayer,
+                            if (_videoController is PlatformVideoController)
+                              Align(
+                                  alignment: Alignment.bottomRight,
+                                  child: PlayTimeWidget(
+                                    controller: _videoController,
+                                  )),
+                            if (widget.allowPlay)
+                              _videoController.progressIndicator,
+                          ],
+                        )),
+                  ),
+                ),
+                if (_videoController is PlatformVideoController)
+                  AspectRatio(
+                      aspectRatio: _videoController.aspectRatio,
+                      child: _ControlsOverlay(
+                        controller: _videoController,
+                        allowPlay: widget.allowPlay,
+                        isFull: _isFullScreen,
+                        onFullScreenTap: () {
+                          if (!_isFullScreen) {
+                            _showFullScreen();
+                          } else {
+                            _closeFullScreen();
+                            if (widget.fullScreen) {
+                              Navigator.of(context).pop();
+                            }
+                          }
+                        },
+                      )),
+              ],
+            )));
+      });
+
   @override
   void initState() {
     super.initState();
@@ -267,6 +383,9 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
     _videoController.addListener(update);
     try {
       _videoController.init().then((_) {
+        if (!widget.useMediaKit&&widget.fullScreen) {
+          _showFullScreen();
+        }
         if (widget.autoPlay) {
           _videoController.play();
         }
@@ -283,6 +402,8 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
         });
       }
     }
+
+
   }
 
   void update() {
@@ -341,60 +462,7 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return _videoInitialized
-        ? LayoutBuilder(builder: (context, constraints) {
-            var width = MediaQuery.of(context).size.width;
-            var height = width / _videoController.aspectRatio;
-            if (constraints.maxHeight != double.infinity) {
-              height = constraints.maxHeight;
-              width = height * _videoController.aspectRatio;
-            } else if (constraints.maxWidth != double.infinity) {
-              width = constraints.maxWidth;
-              height = width / _videoController.aspectRatio;
-            }
-            return Container(
-                width: width,
-                height: height,
-                color: Colors.transparent,
-                child: Center(
-                    child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    AspectRatio(
-                      aspectRatio: _videoController.aspectRatio,
-                      child: FittedBox(
-                        child: SizedBox(
-                            width: _videoController is PlatformVideoController
-                                ? _videoController.size.width
-                                : width,
-                            height: _videoController is PlatformVideoController
-                                ? _videoController.size.height
-                                : height,
-                            child: Stack(
-                              alignment: Alignment.bottomCenter,
-                              children: [
-                                _videoController.videoPlayer,
-                                if (_videoController is PlatformVideoController)
-                                  Align(
-                                      alignment: Alignment.bottomRight,
-                                      child: PlayTimeWidget(
-                                        controller: _videoController,
-                                      )),
-                                if (widget.allowPlay)
-                                  _videoController.progressIndicator,
-                              ],
-                            )),
-                      ),
-                    ),
-                    if (_videoController is PlatformVideoController)
-                      AspectRatio(
-                          aspectRatio: _videoController.aspectRatio,
-                          child: _ControlsOverlay(
-                            controller: _videoController,
-                            allowPlay: widget.allowPlay,
-                          )),
-                  ],
-                )));
-          })
+        ? (_isFullScreen ? Container() : _videoWidget)
         : LayoutBuilder(builder: (context, constraints) {
             var width = MediaQuery.of(context).size.width;
             var height = width / _videoController.aspectRatio;
@@ -424,15 +492,23 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
 }
 
 class _ControlsOverlay extends StatefulWidget {
-  const _ControlsOverlay({required this.controller, required this.allowPlay});
+  const _ControlsOverlay(
+      {required this.controller,
+      required this.allowPlay,
+      required this.onFullScreenTap,
+      required this.isFull});
   final MyVideoController controller;
   final bool allowPlay;
+  final bool isFull;
+  final GestureTapCallback? onFullScreenTap;
 
   @override
   State<StatefulWidget> createState() => _ControlsOverlayState();
 }
 
 class _ControlsOverlayState extends State<_ControlsOverlay> {
+  bool _showFullButton = false;
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -442,20 +518,41 @@ class _ControlsOverlayState extends State<_ControlsOverlay> {
           reverseDuration: const Duration(milliseconds: 200),
           child: widget.controller.isPlaying
               ? const SizedBox.shrink()
-              : const ColoredBox(
+              : ColoredBox(
                   color: Colors.transparent,
                   child: Center(
-                    child: Icon(
-                      Icons.play_arrow,
-                      color: Colors.white,
-                      size: 40,
-                    ),
+                    child: Container(
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.black38,
+                        ),
+                        width: 40,
+                        height: 40,
+                        child: const Center(
+                            child: Icon(
+                          Icons.play_arrow,
+                          color: Colors.white,
+                          size: 32,
+                        ))),
                   ),
                 ),
         ),
         if (widget.allowPlay)
           GestureDetector(
             onTap: () {
+              if (!_showFullButton) {
+                setState(() {
+                  _showFullButton = true;
+                  Future.delayed(const Duration(seconds: 3), () {
+                    if (mounted) {
+                      setState(() {
+                        _showFullButton = false;
+                      });
+                    }
+                  });
+                });
+              }
+
               if (widget.controller.isPlaying) {
                 widget.controller.pause().then((_) => setState(() {}));
               } else {
@@ -463,6 +560,28 @@ class _ControlsOverlayState extends State<_ControlsOverlay> {
               }
             },
           ),
+        if (_showFullButton)
+          Align(
+              alignment: Alignment.bottomRight,
+              child: GestureDetector(
+                  onTap: () {
+                    widget.onFullScreenTap!();
+                  },
+                  child: Container(
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.black38,
+                      ),
+                      width: 40,
+                      height: 40,
+                      child: Center(
+                          child: Icon(
+                        widget.isFull
+                            ? Icons.fullscreen_exit
+                            : Icons.fullscreen,
+                        color: Colors.white,
+                        size: 32,
+                      ))))),
       ],
     );
   }
