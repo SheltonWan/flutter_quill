@@ -232,12 +232,14 @@ class RemoteVideo extends StatefulWidget {
       this.allowPlay = true,
       this.autoPlay = false,
       this.useMediaKit = false,
-      this.fullScreen = false});
+      this.fullScreen = false,
+      this.fullPlay = false});
   final String videoUrl;
   final bool allowPlay;
   final bool autoPlay;
   final bool fullScreen;
   final bool useMediaKit;
+  final bool fullPlay;
   final StreamController navigatorObserver;
   @override
   State<StatefulWidget> createState() => _RemoteVideoState();
@@ -262,16 +264,18 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
     _getWidgetRect();
     _overlayEntry = _createOverlayEntry(child: _videoWidget);
     Overlay.of(context).insert(_overlayEntry!);
-    setState(() {
-      _isFullScreen = true;
-    });
+    _isFullScreen = true;
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _closeFullScreen() {
     _overlayEntry?.remove();
-    setState(() {
-      _isFullScreen = false;
-    });
+    _isFullScreen = false;
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   OverlayEntry _createOverlayEntry({required Widget child}) {
@@ -316,24 +320,12 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
                   aspectRatio: _videoController.aspectRatio,
                   child: FittedBox(
                     child: SizedBox(
-                        width: _videoController is PlatformVideoController
-                            ? _videoController.size.width
-                            : width,
-                        height: _videoController is PlatformVideoController
-                            ? _videoController.size.height
-                            : height,
+                        width: width,
+                        height: height,
                         child: Stack(
                           alignment: Alignment.bottomCenter,
                           children: [
                             _videoController.videoPlayer,
-                            if (_videoController is PlatformVideoController)
-                              Align(
-                                  alignment: Alignment.bottomRight,
-                                  child: PlayTimeWidget(
-                                    controller: _videoController,
-                                  )),
-                            if (widget.allowPlay)
-                              _videoController.progressIndicator,
                           ],
                         )),
                   ),
@@ -345,6 +337,7 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
                         controller: _videoController,
                         allowPlay: widget.allowPlay,
                         isFull: _isFullScreen,
+                        fullPlay: widget.fullPlay,
                         onFullScreenTap: () {
                           if (!_isFullScreen) {
                             _showFullScreen();
@@ -363,7 +356,7 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-
+    print('initState ${widget.videoUrl}');
     WidgetsBinding.instance.addObserver(this);
 
     _subscription = widget.navigatorObserver.stream.listen((event) {
@@ -380,10 +373,13 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
       _videoController = MediaKitVideoController(videoUrl: widget.videoUrl);
     }
 
-    _videoController.addListener(update);
+    if (widget.useMediaKit) {
+      _videoController.addListener(update);
+    }
+
     try {
       _videoController.init().then((_) {
-        if (!widget.useMediaKit&&widget.fullScreen) {
+        if (!widget.useMediaKit && widget.fullScreen) {
           _showFullScreen();
         }
         if (widget.autoPlay) {
@@ -402,28 +398,24 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
         });
       }
     }
-
-
   }
 
   void update() {
-    if (_videoController.isCompleted) {
-      if (mounted) {
-        setState(() {});
-      }
-    }
+    setState(() {});
   }
 
   @override
   void dispose() {
+    print('dispose ${widget.videoUrl}');
+    if (widget.useMediaKit) {
+      _videoController.removeListener(update);
+    }
     _subscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     if (_videoController.isPlaying) {
       _videoController.stop();
     }
-    _videoController
-      ..removeListener(update)
-      ..dispose();
+    _videoController.dispose();
 
     super.dispose();
   }
@@ -496,10 +488,12 @@ class _ControlsOverlay extends StatefulWidget {
       {required this.controller,
       required this.allowPlay,
       required this.onFullScreenTap,
-      required this.isFull});
+      required this.isFull,
+      required this.fullPlay});
   final MyVideoController controller;
   final bool allowPlay;
   final bool isFull;
+  final bool fullPlay;
   final GestureTapCallback? onFullScreenTap;
 
   @override
@@ -508,6 +502,26 @@ class _ControlsOverlay extends StatefulWidget {
 
 class _ControlsOverlayState extends State<_ControlsOverlay> {
   bool _showFullButton = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(update);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(update);
+    super.dispose();
+  }
+
+  void update() {
+    if (widget.controller.isCompleted) {
+      if (mounted) {
+        setState(() {});
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -540,25 +554,44 @@ class _ControlsOverlayState extends State<_ControlsOverlay> {
         if (widget.allowPlay)
           GestureDetector(
             onTap: () {
+              if (!widget.isFull && widget.fullPlay) {
+                widget.onFullScreenTap!();
+              }
               if (!_showFullButton) {
-                setState(() {
-                  _showFullButton = true;
-                  Future.delayed(const Duration(seconds: 3), () {
-                    if (mounted) {
-                      setState(() {
-                        _showFullButton = false;
-                      });
-                    }
+                if (mounted) {
+                  setState(() {
+                    _showFullButton = true;
                   });
+                }
+
+                Future.delayed(const Duration(seconds: 3), () {
+                  if (mounted) {
+                    setState(() {
+                      _showFullButton = false;
+                    });
+                  }
                 });
               }
 
               if (widget.controller.isPlaying) {
-                widget.controller.pause().then((_) => setState(() {}));
+                widget.controller.pause().then((_) {
+                  if (mounted) {
+                    setState(() {});
+                  }
+                });
               } else {
-                widget.controller.play().then((_) => setState(() {}));
+                widget.controller.play().then((_) {
+                  if (mounted) {
+                    setState(() {});
+                  }
+                });
               }
             },
+          ),
+        if (widget.allowPlay && _showFullButton)
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: widget.controller.progressIndicator,
           ),
         if (_showFullButton)
           Align(
@@ -566,6 +599,15 @@ class _ControlsOverlayState extends State<_ControlsOverlay> {
               child: GestureDetector(
                   onTap: () {
                     widget.onFullScreenTap!();
+                    if (widget.isFull &&
+                        widget.fullPlay &&
+                        widget.controller.isPlaying) {
+                      widget.controller.pause().then((_) {
+                        if (mounted) {
+                          setState(() {});
+                        }
+                      });
+                    }
                   },
                   child: Container(
                       decoration: const BoxDecoration(
@@ -582,6 +624,12 @@ class _ControlsOverlayState extends State<_ControlsOverlay> {
                         color: Colors.white,
                         size: 32,
                       ))))),
+        if (_showFullButton)
+          Align(
+              alignment: Alignment.bottomLeft,
+              child: PlayTimeWidget(
+                controller: widget.controller,
+              )),
       ],
     );
   }
@@ -621,11 +669,11 @@ class _PlayTimeWidgetState extends State<PlayTimeWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      widget.controller.isPlaying
-          ? _formatTimeValue(widget.controller.position)
-          : _formatTimeValue(widget.controller.duration),
-      style: const TextStyle(fontSize: 32, color: Colors.white),
-    );
+    return Container(
+        child: Text(_formatTimeValue(
+                  widget.controller.duration - widget.controller.position),
+          style: const TextStyle(fontSize: 16, color: Colors.white),
+        ),
+        padding: EdgeInsets.only(left: 20, right: 20));
   }
 }
