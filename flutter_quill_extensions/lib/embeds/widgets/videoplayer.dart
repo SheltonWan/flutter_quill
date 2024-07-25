@@ -262,9 +262,10 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
 
   void _showFullScreen() {
     _getWidgetRect();
+    _isFullScreen = true;
     _overlayEntry = _createOverlayEntry(child: _videoWidget);
     Overlay.of(context).insert(_overlayEntry!);
-    _isFullScreen = true;
+    
     if (mounted) {
       setState(() {});
     }
