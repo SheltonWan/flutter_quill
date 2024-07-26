@@ -498,7 +498,7 @@ class _ControlsOverlay extends StatefulWidget {
 }
 
 class _ControlsOverlayState extends State<_ControlsOverlay> {
-  bool _showFullButton = false;
+  bool _showPannel = false;
   DateTime? _tapTime;
   @override
   void initState() {
@@ -526,7 +526,7 @@ class _ControlsOverlayState extends State<_ControlsOverlay> {
     if (diff.inSeconds >= 5) {
       if (mounted) {
         setState(() {
-          _showFullButton = false;
+          _showPannel = false;
         });
       }
     } else {
@@ -571,10 +571,10 @@ class _ControlsOverlayState extends State<_ControlsOverlay> {
               if (!widget.isFull && widget.fullPlay) {
                 widget.onFullScreenTap!();
               }
-              if (!_showFullButton) {
+              if (!_showPannel) {
                 if (mounted) {
                   setState(() {
-                    _showFullButton = true;
+                    _showPannel = true;
                   });
                 }
 
@@ -596,7 +596,7 @@ class _ControlsOverlayState extends State<_ControlsOverlay> {
               }
             },
           ),
-        if (widget.allowPlay && _showFullButton)
+        if (widget.allowPlay && _showPannel)
           Align(
             alignment: Alignment.bottomCenter,
             child: Row(children: [
