@@ -232,12 +232,10 @@ class RemoteVideo extends StatefulWidget {
       this.allowPlay = true,
       this.autoPlay = false,
       this.useMediaKit = false,
-      this.fullScreen = false,
       this.fullPlay = false});
   final String videoUrl;
   final bool allowPlay;
   final bool autoPlay;
-  final bool fullScreen;
   final bool useMediaKit;
   final bool fullPlay;
   final StreamController navigatorObserver;
@@ -344,9 +342,6 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
                             _showFullScreen();
                           } else {
                             _closeFullScreen();
-                            if (widget.fullScreen) {
-                              Navigator.of(context).pop();
-                            }
                           }
                         },
                       )),
@@ -357,7 +352,9 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    print('initState ${widget.videoUrl}');
+    if (kDebugMode) {
+      print('initState ${widget.videoUrl}');
+    }
     WidgetsBinding.instance.addObserver(this);
 
     _subscription = widget.navigatorObserver.stream.listen((event) {
@@ -380,9 +377,6 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
 
     try {
       _videoController.init().then((_) {
-        if (!widget.useMediaKit && widget.fullScreen) {
-          _showFullScreen();
-        }
         if (widget.autoPlay) {
           _videoController.play();
         }
@@ -407,7 +401,9 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    print('dispose ${widget.videoUrl}');
+    if (kDebugMode) {
+      print('dispose ${widget.videoUrl}');
+    }
     if (widget.useMediaKit) {
       _videoController.removeListener(update);
     }
@@ -671,10 +667,10 @@ class _PlayTimeWidgetState extends State<PlayTimeWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
+        padding: const EdgeInsets.only(left: 20, right: 20),
         child: Text(_formatTimeValue(
                   widget.controller.duration - widget.controller.position),
           style: const TextStyle(fontSize: 16, color: Colors.white),
-        ),
-        padding: EdgeInsets.only(left: 20, right: 20));
+        ));
   }
 }
