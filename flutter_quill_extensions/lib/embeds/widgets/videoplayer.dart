@@ -260,10 +260,10 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
 
   void _showFullScreen() {
     _getWidgetRect();
-    _isFullScreen = true;
+
     _overlayEntry = _createOverlayEntry(child: _videoWidget);
     Overlay.of(context).insert(_overlayEntry!);
-    
+    _isFullScreen = true;
     if (mounted) {
       setState(() {});
     }
@@ -289,7 +289,7 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
         height: _isFullScreen
             ? MediaQuery.of(context).size.height
             : _widgetRect!.height,
-        child: Material(
+        child: Container(
           color: Colors.black,
           child: child,
         ),
@@ -499,7 +499,7 @@ class _ControlsOverlay extends StatefulWidget {
 
 class _ControlsOverlayState extends State<_ControlsOverlay> {
   bool _showFullButton = false;
-
+  DateTime? _tapTime;
   @override
   void initState() {
     super.initState();
@@ -517,6 +517,22 @@ class _ControlsOverlayState extends State<_ControlsOverlay> {
       if (mounted) {
         setState(() {});
       }
+    }
+  }
+
+  void tryHide() {
+    final now = DateTime.now();
+    final diff = now.difference(_tapTime!);
+    if (diff.inSeconds >= 5) {
+      if (mounted) {
+        setState(() {
+          _showFullButton = false;
+        });
+      }
+    } else {
+      final duration =
+          _tapTime!.add(const Duration(seconds: 5)).difference(now);
+      Future.delayed(duration, tryHide);
     }
   }
 
@@ -551,6 +567,7 @@ class _ControlsOverlayState extends State<_ControlsOverlay> {
         if (widget.allowPlay)
           GestureDetector(
             onTap: () {
+              _tapTime = DateTime.now();
               if (!widget.isFull && widget.fullPlay) {
                 widget.onFullScreenTap!();
               }
@@ -561,13 +578,7 @@ class _ControlsOverlayState extends State<_ControlsOverlay> {
                   });
                 }
 
-                Future.delayed(const Duration(seconds: 3), () {
-                  if (mounted) {
-                    setState(() {
-                      _showFullButton = false;
-                    });
-                  }
-                });
+                Future.delayed(const Duration(seconds: 5), tryHide);
               }
 
               if (widget.controller.isPlaying) {
@@ -588,12 +599,13 @@ class _ControlsOverlayState extends State<_ControlsOverlay> {
         if (widget.allowPlay && _showFullButton)
           Align(
             alignment: Alignment.bottomCenter,
-            child: widget.controller.progressIndicator,
-          ),
-        if (_showFullButton)
-          Align(
-              alignment: Alignment.bottomRight,
-              child: GestureDetector(
+            child: Row(children: [
+              PlayTimeWidget(
+                controller: widget.controller,
+              ),
+              Expanded(child: widget.controller.progressIndicator),
+              const SizedBox(width: 8),
+              GestureDetector(
                   onTap: () {
                     widget.onFullScreenTap!();
                     if (widget.isFull &&
@@ -611,8 +623,8 @@ class _ControlsOverlayState extends State<_ControlsOverlay> {
                         shape: BoxShape.circle,
                         color: Colors.black38,
                       ),
-                      width: 40,
-                      height: 40,
+                      width: 32,
+                      height: 32,
                       child: Center(
                           child: Icon(
                         widget.isFull
@@ -620,13 +632,10 @@ class _ControlsOverlayState extends State<_ControlsOverlay> {
                             : Icons.fullscreen,
                         color: Colors.white,
                         size: 32,
-                      ))))),
-        if (_showFullButton)
-          Align(
-              alignment: Alignment.bottomLeft,
-              child: PlayTimeWidget(
-                controller: widget.controller,
-              )),
+                      )))),
+              const SizedBox(width: 16),
+            ]),
+          ),
       ],
     );
   }
@@ -668,8 +677,9 @@ class _PlayTimeWidgetState extends State<PlayTimeWidget> {
   Widget build(BuildContext context) {
     return Container(
         padding: const EdgeInsets.only(left: 20, right: 20),
-        child: Text(_formatTimeValue(
-                  widget.controller.duration - widget.controller.position),
+        child: Text(
+          _formatTimeValue(
+              widget.controller.duration - widget.controller.position),
           style: const TextStyle(fontSize: 16, color: Colors.white),
         ));
   }
