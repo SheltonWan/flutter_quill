@@ -232,13 +232,15 @@ class RemoteVideo extends StatefulWidget {
       this.allowPlay = true,
       this.autoPlay = false,
       this.useMediaKit = false,
-      this.fullPlay = false});
+      this.fullPlay = false,
+      this.onPlayCallback});
   final String videoUrl;
   final bool allowPlay;
   final bool autoPlay;
   final bool useMediaKit;
   final bool fullPlay;
   final StreamController navigatorObserver;
+  final VoidCallback? onPlayCallback;
   @override
   State<StatefulWidget> createState() => _RemoteVideoState();
 }
@@ -337,6 +339,7 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
                         allowPlay: widget.allowPlay,
                         isFull: _isFullScreen,
                         fullPlay: widget.fullPlay,
+                        onPlayCallback: widget.onPlayCallback,
                         onFullScreenTap: () {
                           if (!_isFullScreen) {
                             _showFullScreen();
@@ -486,13 +489,14 @@ class _ControlsOverlay extends StatefulWidget {
       required this.allowPlay,
       required this.onFullScreenTap,
       required this.isFull,
-      required this.fullPlay});
+      required this.fullPlay,
+      this.onPlayCallback});
   final MyVideoController controller;
   final bool allowPlay;
   final bool isFull;
   final bool fullPlay;
   final GestureTapCallback? onFullScreenTap;
-
+  final VoidCallback? onPlayCallback;
   @override
   State<StatefulWidget> createState() => _ControlsOverlayState();
 }
@@ -589,6 +593,9 @@ class _ControlsOverlayState extends State<_ControlsOverlay> {
                 });
               } else {
                 widget.controller.play().then((_) {
+                  if(widget.onPlayCallback!=null) {
+                    widget.onPlayCallback!();
+                  }
                   if (mounted) {
                     setState(() {});
                   }
