@@ -20,13 +20,11 @@ class VideoApp extends StatefulWidget {
     BuildContext? context,
     super.key,
     this.onVideoInit,
-    this.onCacheVideoProvider
   });
 
   final String videoUrl;
   final bool readOnly;
   final void Function(GlobalKey videoContainerKey)? onVideoInit;
-  final Future<String> Function(String)? onCacheVideoProvider;
 
   @override
   VideoAppState createState() => VideoAppState();
