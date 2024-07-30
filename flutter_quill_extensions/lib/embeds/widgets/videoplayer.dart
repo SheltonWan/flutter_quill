@@ -34,7 +34,8 @@ abstract class MyVideoController {
 }
 
 class MediaKitVideoController extends MyVideoController {
-  MediaKitVideoController({required this.videoUrl}) {
+  MediaKitVideoController(
+      {required this.videoUrl, required this.onPlayCallback}) {
     _player = Player(configuration: PlayerConfiguration(
       ready: () {
         _videoController = VideoController(_player);
@@ -44,10 +45,12 @@ class MediaKitVideoController extends MyVideoController {
   late Player _player;
   late VideoController _videoController;
   final String videoUrl;
+  final VoidCallback? onPlayCallback;
   bool _initialized = false;
   bool _hasError = false;
-  late StreamSubscription? _completedSubscription;
-  late StreamSubscription? _errorSubscription;
+  StreamSubscription? _completedSubscription;
+  StreamSubscription? _errorSubscription;
+  StreamSubscription? _playSubscription;
 
   @override
   Future<void> init() async {
@@ -78,12 +81,19 @@ class MediaKitVideoController extends MyVideoController {
       _hasError = event.isNotEmpty;
       callback();
     });
+
+    _playSubscription = _player.stream.playing.listen((isPlaying) {
+      if (isPlaying && onPlayCallback != null) {
+        onPlayCallback!();
+      }
+    });
   }
 
   @override
   void removeListener(VoidCallback callback) {
     _completedSubscription?.cancel();
     _errorSubscription?.cancel();
+    _playSubscription?.cancel();
   }
 
   ///因为有 控制器 大小限制，所以不能由原始比例控制，否则越界
@@ -371,7 +381,8 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
     if (!widget.useMediaKit) {
       _videoController = PlatformVideoController(widget.videoUrl);
     } else {
-      _videoController = MediaKitVideoController(videoUrl: widget.videoUrl);
+      _videoController = MediaKitVideoController(
+          videoUrl: widget.videoUrl, onPlayCallback: widget.onPlayCallback);
     }
 
     if (widget.useMediaKit) {
@@ -593,7 +604,7 @@ class _ControlsOverlayState extends State<_ControlsOverlay> {
                 });
               } else {
                 widget.controller.play().then((_) {
-                  if(widget.onPlayCallback!=null) {
+                  if (widget.onPlayCallback != null) {
                     widget.onPlayCallback!();
                   }
                   if (mounted) {
