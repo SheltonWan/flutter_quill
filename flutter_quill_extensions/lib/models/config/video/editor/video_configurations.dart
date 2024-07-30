@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart' show GlobalKey;
 import 'package:meta/meta.dart' show immutable;
-
-import '../../../../utils/dart_ui/dart_ui_real.dart';
 import 'youtube_video_support_mode.dart';
 
 @immutable
@@ -35,7 +33,7 @@ class QuillEditorVideoEmbedConfigurations {
   final String Function(String)? onLocalVideoProvider;
   final StreamController Function()? onStreamControllerProvider;
   final void Function(GlobalKey videoContainerKey)? onVideoInit;
-  final VoidCallback? onPlayCallback;
+  final void Function(String)? onPlayCallback;
 
   /// Specifies how YouTube videos should be loaded if the video URL
   /// is YouTube video.

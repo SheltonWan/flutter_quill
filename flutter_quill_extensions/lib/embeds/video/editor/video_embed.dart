@@ -48,17 +48,21 @@ class QuillEditorVideoEmbedBuilder extends EmbedBuilder {
 
     final width = elementSize.width;
     final height = elementSize.height;
-    if(configurations.onLocalVideoProvider!=null&&configurations.onStreamControllerProvider!=null)
-    {
+    if (configurations.onLocalVideoProvider != null &&
+        configurations.onStreamControllerProvider != null) {
       return Container(
-        width: width,
-        height: height,
-        margin: EdgeInsets.all(margin ?? 0.0),
-        alignment: alignment,
-        child: RemoteVideo(videoUrl: configurations.onLocalVideoProvider!(videoUrl),navigatorObserver: configurations.onStreamControllerProvider!(),useMediaKit: configurations.useMediaKit,onPlayCallback: configurations.onPlayCallback)
-
-      );
-    }else {
+          width: width,
+          height: height,
+          margin: EdgeInsets.all(margin ?? 0.0),
+          alignment: alignment,
+          child: RemoteVideo(
+              videoUrl: configurations.onLocalVideoProvider!(videoUrl),
+              navigatorObserver: configurations.onStreamControllerProvider!(),
+              useMediaKit: configurations.useMediaKit,
+              onPlayCallback: () {
+                configurations.onPlayCallback!(videoUrl);
+              }));
+    } else {
       return Container(
         width: width,
         height: height,
@@ -71,6 +75,5 @@ class QuillEditorVideoEmbedBuilder extends EmbedBuilder {
         ),
       );
     }
-
   }
 }
