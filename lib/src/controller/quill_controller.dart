@@ -608,11 +608,15 @@ class QuillController extends ChangeNotifier {
       for (final emap in lines) {
         final index = emap['index'] as int;
         final num = _numberBefore(index, codes);
-        formatText(index-num*4, emap['length'], const BoldAttribute(),
+        var delta = 0;
+        if (num > 0) {
+          final map = codes[num - 1];
+          delta += map['delta'] as int;
+        }
+        formatText(index - delta, emap['length'], const BoldAttribute(),
             shouldNotifyListeners: true);
       }
 
-      
       for (final emap in codes) {
         formatText(
             emap['index'] as int, emap['length'], const CodeBlockAttribute(),
@@ -681,9 +685,38 @@ class QuillController extends ChangeNotifier {
     // 遍历每一行
     for (final line in lines) {
       if (line.startsWith('###')) {
+        var delta = 3;
         // 剔除开头的 ###
-        final modifiedLine = line.substring(3).trimLeft(); // 去掉 ### 并去掉多余的空格
+        final result = line.substring(3);
+        final modifiedLine = result.replaceAll(RegExp(r'\*\*'), '');
+        delta += result.length - modifiedLine.length;
+        // 记录该行的新索引和长度
+        linesInfo.add({
+          'index': currentIndex, // 当前新字符串中的索引
+          'length': modifiedLine.length, // 修改后行的长度
+          'delta':delta
+        });
 
+        // 将修改后的行加入新的字符串
+        newText.write(modifiedLine);
+      } else if (line.contains('####')) {
+        var delta = 3;
+        final result = line.replaceAll(RegExp(r'####'), ''); // 去掉 #### 并去掉多余的空格
+        final modifiedLine = result.replaceAll(RegExp(r'\*\*'), '');
+        delta += result.length - modifiedLine.length;
+        // 记录该行的新索引和长度
+        linesInfo.add({
+          'index': currentIndex + 1, // 当前新字符串中的索引
+          'length': modifiedLine.length, // 修改后行的长度
+          'delta':delta
+        });
+
+        // 将修改后的行加入新的字符串
+        newText
+          ..write(' ')
+          ..write(modifiedLine);
+      } /*else if (line.contains('**')) {
+        final modifiedLine = line.replaceAll(RegExp(r'\*\*'), '');
         // 记录该行的新索引和长度
         linesInfo.add({
           'index': currentIndex, // 当前新字符串中的索引
@@ -692,7 +725,8 @@ class QuillController extends ChangeNotifier {
 
         // 将修改后的行加入新的字符串
         newText.write(modifiedLine);
-      } else {
+      } */
+      else {
         // 保持原样加入未以 ### 开头的行
         newText.write(line);
       }
@@ -728,6 +762,7 @@ class QuillController extends ChangeNotifier {
       codeInfo.add({
         'index': newText.length, // 新字符串中的起始索引
         'length': code.length, // 代码片段的长度
+        'delta': match.end - newText.length - code.length
       });
 
       // 将代码片段写入新的字符串
