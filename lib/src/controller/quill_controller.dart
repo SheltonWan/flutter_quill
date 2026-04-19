@@ -572,8 +572,13 @@ class QuillController extends ChangeNotifier {
   /// Internal method to allow unit testing
   bool pasteUsingPlainOrDelta(String? clipboardText) {
     if (clipboardText != null) {
+      final mapData = _removeBacktick(clipboardText);
+      final mapData2 = _remove3SharpChar(mapData['text'] as String);
+      final mapData3 = _removeCodeflag(mapData2['text'] as String);
+      final String? newClipboardText = mapData3['text'];
+
       /// Internal copy-paste preserves styles and embeds
-      if (clipboardText == _pastePlainText &&
+      if (newClipboardText == _pastePlainText &&
           _pastePlainText.isNotEmpty &&
           _pasteDelta.isNotEmpty) {
         replaceText(selection.start, selection.end - selection.start,
@@ -582,13 +587,197 @@ class QuillController extends ChangeNotifier {
         replaceText(
             selection.start,
             selection.end - selection.start,
-            clipboardText,
+            newClipboardText,
             TextSelection.collapsed(
-                offset: selection.end + clipboardText.length));
+                offset: selection.end + newClipboardText!.length));
+      }
+
+      final List lines = mapData2['lines'];
+      final List codes = mapData3['codes'];
+      // final List words = mapData['words'];
+
+      // const hex = '#FFE0F2F1';
+      // for (final emap in words) {
+      //   final index = emap['index'] as int;
+      //   final cnum = _numberBefore(index, codes);
+      //   final lnum = _numberBefore(index, lines);
+      //   formatText(index-cnum*4-lnum*4, emap['length'], const BackgroundAttribute(hex),
+      //       shouldNotifyListeners: true);
+      // }
+
+      for (final emap in lines) {
+        final index = emap['index'] as int;
+        final num = _numberBefore(index, codes);
+        var delta = 0;
+        if (num > 0) {
+          final map = codes[num - 1];
+          delta += map['delta'] as int;
+        }
+        formatText(index - delta, emap['length'], const BoldAttribute(),
+            shouldNotifyListeners: true);
+      }
+
+      for (final emap in codes) {
+        formatText(
+            emap['index'] as int, emap['length'], const CodeBlockAttribute(),
+            shouldNotifyListeners: true);
       }
       return true;
     }
     return false;
+  }
+
+  int _numberBefore(int startIndex, List codes) {
+    var num = 0;
+    for (final emap in codes) {
+      final index = emap['index'] as int;
+      if (index > startIndex) break;
+      num++;
+    }
+    return num;
+  }
+
+  Map<String, dynamic> _removeBacktick(String text) {
+    // String text = "这是一个`包含`反引号的`字符串`和`多个词汇`。";
+
+    // 用正则表达式匹配反引号包裹的词汇
+    final exp = RegExp(r'`(.*?)`');
+    final wordsInfo = [];
+    final newText = StringBuffer(); // 用来构建新的字符串
+    var lastIndex = 0;
+
+    // 遍历所有匹配项
+    for (final match in exp.allMatches(text)) {
+      // 将匹配前的部分加到新字符串
+      newText.write(text.substring(lastIndex, match.start));
+
+      // 提取反引号包裹的实际词汇（去掉反引号）
+      final word = match.group(1)!;
+
+      // 记录实际词汇的索引（新文本中的索引）和长度
+      wordsInfo.add({
+        'index': newText.length, // 新文本中的实际索引
+        'length': word.length, // 实际词汇的长度
+      });
+
+      // 将去掉反引号的词汇加入新字符串
+      newText.write(word);
+
+      // 更新 lastIndex 以继续处理剩余部分
+      lastIndex = match.end;
+    }
+
+    // 添加最后剩余的部分
+    newText.write(text.substring(lastIndex));
+
+    // 输出剔除反引号后的新字符串
+    final finalText = newText.toString();
+    return {'text': finalText, 'words': wordsInfo};
+  }
+
+  Map<String, dynamic> _remove3SharpChar(String text) {
+    // 分割成多行
+    final lines = text.split('\n');
+    final linesInfo = [];
+    final newText = StringBuffer(); // 用来构建新的字符串
+    var currentIndex = 0;
+
+    // 遍历每一行
+    for (final line in lines) {
+      if (line.startsWith('###')) {
+        var delta = 3;
+        // 剔除开头的 ###
+        final result = line.substring(3);
+        final modifiedLine = result.replaceAll(RegExp(r'\*\*'), '');
+        delta += result.length - modifiedLine.length;
+        // 记录该行的新索引和长度
+        linesInfo.add({
+          'index': currentIndex, // 当前新字符串中的索引
+          'length': modifiedLine.length, // 修改后行的长度
+          'delta':delta
+        });
+
+        // 将修改后的行加入新的字符串
+        newText.write(modifiedLine);
+      } else if (line.contains('####')) {
+        var delta = 3;
+        final result = line.replaceAll(RegExp(r'####'), ''); // 去掉 #### 并去掉多余的空格
+        final modifiedLine = result.replaceAll(RegExp(r'\*\*'), '');
+        delta += result.length - modifiedLine.length;
+        // 记录该行的新索引和长度
+        linesInfo.add({
+          'index': currentIndex + 1, // 当前新字符串中的索引
+          'length': modifiedLine.length, // 修改后行的长度
+          'delta':delta
+        });
+
+        // 将修改后的行加入新的字符串
+        newText
+          ..write(' ')
+          ..write(modifiedLine);
+      } /*else if (line.contains('**')) {
+        final modifiedLine = line.replaceAll(RegExp(r'\*\*'), '');
+        // 记录该行的新索引和长度
+        linesInfo.add({
+          'index': currentIndex, // 当前新字符串中的索引
+          'length': modifiedLine.length, // 修改后行的长度
+        });
+
+        // 将修改后的行加入新的字符串
+        newText.write(modifiedLine);
+      } */
+      else {
+        // 保持原样加入未以 ### 开头的行
+        newText.write(line);
+      }
+
+      // 添加换行符
+      newText.write('\n');
+
+      // 更新 currentIndex 为下一行的起始索引
+      currentIndex = newText.length;
+    }
+
+    // 剔除末尾多余的换行符
+    final finalText = newText.toString().trimRight();
+    return {'text': finalText, 'lines': linesInfo};
+  }
+
+  Map<String, dynamic> _removeCodeflag(String text) {
+    // 正则表达式匹配以空白行+`开头，`+空白行结束的代码块
+    final exp = RegExp(r'(?<=\n)\s*`([\s\S]*?)`\s*(?=\n)');
+    final codeInfo = [];
+    final newText = StringBuffer();
+    var lastIndex = 0;
+
+    // 遍历所有匹配的代码片段
+    for (final match in exp.allMatches(text)) {
+      // 将非代码部分写入新的字符串
+      newText.write(text.substring(lastIndex, match.start));
+
+      // 提取代码片段并去除反引号
+      final code = match.group(1)!;
+
+      // 记录代码片段在新字符串中的索引和长度
+      codeInfo.add({
+        'index': newText.length, // 新字符串中的起始索引
+        'length': code.length, // 代码片段的长度
+        'delta': match.end - newText.length - code.length
+      });
+
+      // 将代码片段写入新的字符串
+      newText.write(code);
+
+      // 更新 lastIndex 为下一个位置
+      lastIndex = match.end;
+    }
+
+    // 将最后剩余的文本加到新字符串中
+    newText.write(text.substring(lastIndex));
+
+    // 输出剔除反引号后的新字符串
+    final finalText = newText.toString();
+    return {'text': finalText, 'codes': codeInfo};
   }
 
   void _pasteUsingDelta(Delta deltaFromClipboard) {

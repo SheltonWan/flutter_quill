@@ -27,6 +27,11 @@ dependencies:
   htmltopdfwidgets: ^1.0.3
   meta: ^1.10.0
 
+
+dependency_overrides:
+  quill_html_converter:
+    path: ../../flutter_quill/quill_html_converter
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
