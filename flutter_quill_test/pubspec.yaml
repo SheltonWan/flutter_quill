@@ -28,7 +28,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_quill: ^10.0.0
+  flutter_quill:
+    path: ../
   flutter_test:
     sdk: flutter
 

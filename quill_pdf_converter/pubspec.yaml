@@ -21,7 +21,8 @@ dependencies:
   flutter:
     sdk: flutter
   dart_quill_delta: ^10.1.2
-  quill_html_converter: ^9.5.12
+  quill_html_converter:
+    path: ../quill_html_converter
   pdf: ^3.10.8
   htmltopdfwidgets: ^1.0.3
   meta: ^1.10.0

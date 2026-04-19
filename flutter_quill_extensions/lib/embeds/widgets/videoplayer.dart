@@ -366,7 +366,7 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     if (kDebugMode) {
-      print('initState ${widget.videoUrl}');
+      print('RemoteVideo initState ${widget.videoUrl}');
     }
     WidgetsBinding.instance.addObserver(this);
 
@@ -416,7 +416,7 @@ class _RemoteVideoState extends State<RemoteVideo> with WidgetsBindingObserver {
   @override
   void dispose() {
     if (kDebugMode) {
-      print('dispose ${widget.videoUrl}');
+      print('RemoteVideo dispose ${widget.videoUrl}');
     }
     if (widget.useMediaKit) {
       _videoController.removeListener(update);
