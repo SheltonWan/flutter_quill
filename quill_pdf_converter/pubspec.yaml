@@ -30,7 +30,7 @@ dependencies:
 
 dependency_overrides:
   quill_html_converter:
-    path: ../../flutter_quill/quill_html_converter
+    path: ../quill_html_converter
 
 dev_dependencies:
   flutter_test:
